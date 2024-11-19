@@ -2,9 +2,10 @@ import Peer from 'peerjs'
 import Network from '../services/Network'
 import store from '../stores'
 import { setVideoConnected } from '../stores/UserStore'
-import { Video, VideoOff, Mic, MicOff, LucideIcon } from 'lucide-react'
+import { Video, VideoOff, Mic, MicOff, LucideIcon, LucideProps } from 'lucide-react'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import type {Root} from 'react-dom/client'
 
 export default class WebRTC {
   private myPeer: Peer
@@ -132,8 +133,8 @@ export default class WebRTC {
   }
 
   private createIconButton(
-    ActiveIcon: LucideIcon,
-    InactiveIcon: LucideIcon,
+    ActiveIcon: React.ComponentType<LucideProps>,
+    InactiveIcon: React.ComponentType<LucideProps>,
     onClick: () => void
   ) {
     const button = document.createElement('button')
@@ -143,15 +144,19 @@ export default class WebRTC {
     iconContainer.className = 'w-6 h-6'
     button.appendChild(iconContainer)
     
-    const root = createRoot(iconContainer)
+    const root: Root = createRoot(iconContainer)
     let isActive = true
 
     const updateIcon = () => {
       const IconComponent = isActive ? ActiveIcon : InactiveIcon
-      root.render(React.createElement(IconComponent, { 
-        size: 24,
-        color: isActive ? '#000000' : '#666666'
-      }))
+      root.render(
+        <div className="w-6 h-6">
+          <IconComponent 
+            size={24}
+            color={isActive ? '#000000' : '#666666'}
+          />
+        </div>
+      )
     }
 
     button.addEventListener('click', () => {
@@ -191,6 +196,7 @@ export default class WebRTC {
                 if (isCameraOn) {
                     videoTrack.stop(); // Stop the video track to release the camera
                     this.myStream.removeTrack(videoTrack);
+                    this.myVideo.style.display = 'none';
                     isCameraOn = false;
                 } else {
                     try {
@@ -198,6 +204,7 @@ export default class WebRTC {
                         const newVideoTrack = newStream.getVideoTracks()[0];
                         this.myStream.addTrack(newVideoTrack);
                         this.addVideoStream(this.myVideo, this.myStream);
+                        this.myVideo.style.display = 'block';
                         isCameraOn = true;
                     } catch (error) {
                         console.error("Failed to access camera:", error);
