@@ -2,55 +2,73 @@ import Phaser from 'phaser'
 import { BackgroundMode } from '../../../types/BackgroundMode'
 
 export default class Background extends Phaser.Scene {
-  private cloud!: Phaser.Physics.Arcade.Group
-  private cloudKey!: string
-  private backdropKey!: string
+  private clouds!: Phaser.Physics.Arcade.Group
+  private backgroundConfig: Record<BackgroundMode, {
+    backdropKey: string;
+    cloudKey: string;
+    backgroundColor: string;
+  }> = {
+    [BackgroundMode.DAY]: {
+      backdropKey: 'backdrop_day',
+      cloudKey: 'cloud_day',
+      backgroundColor: '#c6eefc'
+    },
+    [BackgroundMode.NIGHT]: {
+      backdropKey: 'backdrop_night',
+      cloudKey: 'cloud_night', 
+      backgroundColor: '#2c4464'
+    }
+  }
 
   constructor() {
     super('background')
   }
 
   create(data: { backgroundMode: BackgroundMode }) {
-    const sceneHeight = this.cameras.main.height
-    const sceneWidth = this.cameras.main.width
+    const { width: sceneWidth, height: sceneHeight } = this.cameras.main
 
-    // set texture of images based on the background mode
-    if (data.backgroundMode === BackgroundMode.DAY) {
-      this.backdropKey = 'backdrop_day'
-      this.cloudKey = 'cloud_day'
-      this.cameras.main.setBackgroundColor('#c6eefc')
-    } else {
-      this.backdropKey = 'backdrop_night'
-      this.cloudKey = 'cloud_night'
-      this.cameras.main.setBackgroundColor('#2c4464')
-    }
+    // Get configuration based on background mode
+    const { backdropKey, cloudKey, backgroundColor } = this.backgroundConfig[data.backgroundMode]
+    
+    // Set background color
+    this.cameras.main.setBackgroundColor(backgroundColor)
 
     // Add backdrop image
-    const backdropImage = this.add.image(sceneWidth / 2, sceneHeight / 2, this.backdropKey)
-    const scale = Math.max(sceneWidth / backdropImage.width, sceneHeight / backdropImage.height)
-    backdropImage.setScale(scale).setScrollFactor(0)
+    this.addScaledImage(sceneWidth / 2, sceneHeight / 2, backdropKey)
 
     // Add sun or moon image
-    const sunMoonImage = this.add.image(sceneWidth / 2, sceneHeight / 2, 'sun_moon')
-    const scale2 = Math.max(sceneWidth / sunMoonImage.width, sceneHeight / sunMoonImage.height)
-    sunMoonImage.setScale(scale2).setScrollFactor(0)
+    this.addScaledImage(sceneWidth / 2, sceneHeight / 2, 'sun_moon')
 
-    // Add 24 clouds at random positions and with random speeds
-    const frames = this.textures.get(this.cloudKey).getFrameNames()
-    this.cloud = this.physics.add.group()
-    for (let i = 0; i < 24; i++) {
+    // Add clouds
+    this.createClouds(cloudKey, sceneWidth, sceneHeight)
+  }
+
+  private addScaledImage(x: number, y: number, key: string) {
+    const image = this.add.image(x, y, key)
+    const scale = Math.max(
+      this.cameras.main.width / image.width, 
+      this.cameras.main.height / image.height
+    )
+    return image.setScale(scale).setScrollFactor(0)
+  }
+
+  private createClouds(cloudKey: string, sceneWidth: number, sceneHeight: number) {
+    const frames = this.textures.get(cloudKey).getFrameNames()
+    this.clouds = this.physics.add.group()
+
+    Array.from({ length: 24 }, (_, i) => {
       const x = Phaser.Math.RND.between(-sceneWidth * 0.5, sceneWidth * 1.5)
       const y = Phaser.Math.RND.between(sceneHeight * 0.2, sceneHeight * 0.8)
       const velocity = Phaser.Math.RND.between(15, 30)
 
-      this.cloud
-        .get(x, y, this.cloudKey, frames[i % 6])
+      this.clouds
+        .get(x, y, cloudKey, frames[i % frames.length])
         .setScale(3)
         .setVelocity(velocity, 0)
-    }
+    })
   }
 
-  update(t: number, dt: number) {
-    this.physics.world.wrap(this.cloud, 500)
+  update() {
+    this.physics.world.wrap(this.clouds, 500)
   }
 }
