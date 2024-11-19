@@ -4,7 +4,7 @@
   "description": "Server for AvatarVerse",
   "main": ".eslintrc.js",
   "scripts": {
-    "build": "tsc --project tsconfig.server.json", 
+    "build": "cd server && tsc --project tsconfig.server.json", 
     "start": "cd server && ts-node-dev --project tsconfig.server.json --respawn --transpile-only index.ts",
     "heroku-postbuild": "yarn && cd types && yarn && cd ../server && tsc --project tsconfig.server.json",
     "test": "echo \"Error: no test specified\" && exit 1"
