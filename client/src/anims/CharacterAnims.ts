@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 
 export const createCharacterAnims = (anims: Phaser.Animations.AnimationManager) => {
   // Increased base frame rate for smoother animations
-  const animsFrameRate = 24
+  const animsFrameRate = 48
 
   // Animation configuration for different states
   const animationStates = {
